@@ -59,12 +59,11 @@ export default function App() {
         code: string;
       };
       const timestamp = Date.now();
-      const expiresAt = (Math.floor(timestamp / 30_000) + 1) * 30_000;
       setSseEvent({
         code,
         timestamp,
-        expiresAt,
-        progress: ((expiresAt - timestamp) / 30_000) * 100
+        expiresAt: timestamp + 30_000,
+        progress: 100
       });
     };
     events.addEventListener("message", handleCode);
