@@ -1,43 +1,46 @@
-import { SyntheticEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type Enrollment = {
   secret: string;
-  uri: string;
   qrCode: string;
-  label: string;
 };
+
+type SseEvent = {
+  code: string;
+  timestamp: number;
+  expiresAt: number;
+  progress: number;
+};
+
+type LogType = "success" | "failure" | "error";
+type Log = { type: LogType; message: string };
 
 export default function App() {
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [serverCode, setServerCode] = useState("");
-  const [codeReceivedAt, setCodeReceivedAt] = useState<number | null>(null);
-  const [progress, setProgress] = useState(0);
+  const [loading, setLoading] = useState({
+    createEnrollment: true,
+    verifyCode: false
+  });
+  const [sseEvent, setSseEvent] = useState<SseEvent | null>(null);
   const [sseConnected, setSseConnected] = useState(false);
-  const [showSecret, setShowSecret] = useState(false);
-  const [token, setToken] = useState("");
-  const [verification, setVerification] = useState<{
-    valid: boolean;
-    message: string;
-  } | null>(null);
-  const [error, setError] = useState("");
+  const [log, setLog] = useState<Log | null>(null);
   const [copied, setCopied] = useState(false);
 
   const createEnrollment = async () => {
-    setError("");
-    setLoading(true);
-    setVerification(null);
-    setToken("");
-    setShowSecret(false);
+    setLog(null);
+    setLoading((prev) => ({ ...prev, createEnrollment: true }));
     try {
       const response = await fetch("/api/enroll", { method: "POST" });
       if (!response.ok) throw new Error("Enrollment request failed");
       const result = (await response.json()) as Enrollment;
       setEnrollment(result);
     } catch {
-      setError("Could not create enrollment. Please try again.");
+      setLog({
+        type: "error",
+        message: "Could not create enrollment. Please try again."
+      });
     } finally {
-      setLoading(false);
+      setLoading((prev) => ({ ...prev, createEnrollment: false }));
     }
   };
 
@@ -55,50 +58,74 @@ export default function App() {
       const { code } = JSON.parse((event as MessageEvent<string>).data) as {
         code: string;
       };
-      setServerCode(code);
-      setCodeReceivedAt(Date.now());
+      const timestamp = Date.now();
+      const expiresAt = (Math.floor(timestamp / 30_000) + 1) * 30_000;
+      setSseEvent({
+        code,
+        timestamp,
+        expiresAt,
+        progress: ((expiresAt - timestamp) / 30_000) * 100
+      });
     };
     events.addEventListener("message", handleCode);
 
+    const timer = setInterval(() => {
+      setSseEvent((prev) =>
+        prev
+          ? {
+              ...prev,
+              progress: Math.max(
+                0,
+                ((prev.expiresAt - Date.now()) / 30_000) * 100
+              )
+            }
+          : null
+      );
+    }, 1000);
+
     return () => {
+      clearInterval(timer);
       events.close();
       setSseConnected(false);
     };
   }, [enrollment]);
 
-  useEffect(() => {
-    if (codeReceivedAt === null) return;
-
-    const updateProgress = () => {
-      setProgress(
-        Math.max(0, 100 - ((Date.now() - codeReceivedAt) / 30_000) * 100)
-      );
-    };
-    updateProgress();
-    const timer = window.setInterval(updateProgress, 100);
-    return () => window.clearInterval(timer);
-  }, [codeReceivedAt]);
-
-  async function verifyCode(event: SyntheticEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
-    setVerification(null);
+  async function verifyCode(code: string) {
+    if (code.length !== 6 || loading.verifyCode) return;
+    setLog(null);
+    setLoading((prev) => ({ ...prev, verifyCode: true }));
     try {
       const response = await fetch("/api/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token })
+        body: JSON.stringify({ token: code })
       });
       if (!response.ok) throw new Error("Verification request failed");
       const result = (await response.json()) as { ok: boolean };
-      setVerification({
-        valid: result.ok,
+      setLog({
+        type: result.ok ? "success" : "failure",
         message: result.ok
           ? "Code verified successfully"
           : "Invalid or expired code"
       });
     } catch {
-      setError("Something went wrong. Please try again.");
+      setLog({
+        type: "error",
+        message: "Something went wrong. Please try again."
+      });
+    } finally {
+      setLoading((prev) => ({ ...prev, verifyCode: false }));
+    }
+  }
+
+  function handleTokenInput(event: React.InputEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const code = input.value.replace(/\D/g, "").slice(0, 6);
+    input.value = code;
+    setLog(null);
+    if (code.length === 6) {
+      void verifyCode(code);
+      input.value = "";
     }
   }
 
@@ -107,11 +134,13 @@ export default function App() {
     try {
       await navigator.clipboard.writeText(enrollment.secret);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
+      setTimeout(() => setCopied(false), 1500);
     } catch {
-      setError(
-        "Clipboard access is unavailable. Reveal the secret to copy it manually."
-      );
+      setLog({
+        type: "error",
+        message:
+          "Clipboard access is unavailable. Please use a supported browser."
+      });
     }
   }
 
@@ -145,8 +174,8 @@ export default function App() {
           <span className="section-index">01 / ENROLLMENT</span>
         </div>
 
-        <div className="qr-area" aria-busy={loading}>
-          {loading ? (
+        <div className="qr-area" aria-busy={loading.createEnrollment}>
+          {loading.createEnrollment ? (
             <div
               className="qr-skeleton"
               role="status"
@@ -160,48 +189,41 @@ export default function App() {
             <p className="scan-copy">ENROLLMENT UNAVAILABLE</p>
           )}
           <p className="scan-copy">
-            {loading
+            {loading.createEnrollment
               ? "PREPARING YOUR SECRET"
               : enrollment
                 ? "SCAN WITH YOUR AUTHENTICATOR"
                 : "PLEASE TRY AGAIN"}
           </p>
-          {!loading && enrollment && (
+          {!loading.createEnrollment && enrollment && (
             <p className="muted small-copy">
               Google Authenticator · Microsoft Authenticator · 1Password
             </p>
           )}
         </div>
 
-        {loading && (
+        {loading.createEnrollment && (
           <div className="secret-skeleton" aria-hidden="true">
             <span />
             <span />
           </div>
         )}
 
-        {!loading && !enrollment && (
+        {!loading.createEnrollment && !enrollment && (
           <button className="primary-button" onClick={createEnrollment}>
             TRY AGAIN <span>↗</span>
           </button>
         )}
 
-        {!loading && enrollment && (
+        {!loading.createEnrollment && enrollment && (
           <div className="secret-block">
-            <div className="secret-toolbar">
-              <label>
-                MANUAL SECRET <span>· BASE32</span>
-              </label>
-              <button
-                className="text-button"
-                onClick={() => setShowSecret((value) => !value)}
-              >
-                {showSecret ? "HIDE SECRET" : "SHOW SECRET"}
-              </button>
-            </div>
+            <label className="secret-label">
+              MANUAL SECRET <span>· BASE32</span>
+            </label>
             <div className="secret-value">
               <code>
-                {showSecret ? enrollment.secret : "•••• •••• •••• ••••"}
+                {enrollment.secret.slice(0, 4)}...
+                {enrollment.secret.slice(-2)}
               </code>
               <button
                 className="copy-button"
@@ -212,10 +234,6 @@ export default function App() {
                 {copied ? "✓" : "COPY"}
               </button>
             </div>
-            <details className="uri-details">
-              <summary>VIEW PROVISIONING URI</summary>
-              <code>{enrollment.uri}</code>
-            </details>
           </div>
         )}
       </section>
@@ -235,7 +253,7 @@ export default function App() {
                 <i />
                 {sseConnected ? "LIVE" : "WAIT"}
               </span>
-              <code>{serverCode || "------"}</code>
+              <code>{sseEvent?.code || "------"}</code>
               <span>02 / VALIDATION</span>
             </div>
             <div
@@ -244,9 +262,9 @@ export default function App() {
               aria-label="Time remaining for server code"
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-valuenow={Math.round(progress)}
+              aria-valuenow={Math.round(sseEvent?.progress ?? 0)}
             >
-              <span style={{ width: `${progress}%` }} />
+              <span style={{ width: `${sseEvent?.progress ?? 0}%` }} />
             </div>
           </div>
         </div>
@@ -256,48 +274,39 @@ export default function App() {
           that here(vibe-coded apps might though).
         </p>
 
-        <form className="verify-form" onSubmit={verifyCode}>
+        <form
+          className="verify-form"
+          onSubmit={(event) => event.preventDefault()}
+        >
           <label htmlFor="otp-code">AUTHENTICATOR CODE</label>
-          <div className="verify-controls">
-            <input
-              id="otp-code"
-              className="otp-input"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={6}
-              pattern="[0-9]{6}"
-              placeholder="000000"
-              value={token}
-              onChange={(event) => {
-                setToken(event.target.value.replace(/\D/g, "").slice(0, 6));
-                setVerification(null);
-                setError("");
-              }}
-              disabled={!enrollment}
-            />
-            <button
-              className="verify-button"
-              type="submit"
-              disabled={!enrollment || token.length !== 6}
-            >
-              VERIFY <span>→</span>
-            </button>
-          </div>
+          <input
+            id="otp-code"
+            className="otp-input"
+            name="token"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            pattern="[0-9]{6}"
+            placeholder="1 2 3 4 5 6"
+            aria-label="Six-digit authenticator code"
+            onInput={handleTokenInput}
+            disabled={!enrollment || loading.verifyCode}
+          />
+          {loading.verifyCode && (
+            <span className="verify-status" role="status">
+              VERIFYING…
+            </span>
+          )}
         </form>
-        {verification && (
-          <div
-            className={`result ${verification.valid ? "success" : "failure"}`}
-            role="status"
-          >
-            <b>{verification.valid ? "✓" : "!"}</b>
-            {verification.message}
-          </div>
-        )}
       </section>
 
-      {error && (
-        <div className="error-banner" role="alert">
-          {error}
+      {log && (
+        <div
+          className={`log log-${log.type}`}
+          role={log.type === "error" ? "alert" : "status"}
+        >
+          <b>{log.type === "success" ? "✓" : "!"}</b>
+          {log.message}
         </div>
       )}
 

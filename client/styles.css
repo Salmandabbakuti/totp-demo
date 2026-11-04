@@ -79,11 +79,10 @@ button {
 .header-tag,
 .kicker,
 .section-index,
-.secret-toolbar label,
+.secret-label,
 .verify-form>label,
 .scan-copy,
-footer,
-.uri-details summary {
+footer {
   font-family: var(--mono);
   letter-spacing: .08em
 }
@@ -244,27 +243,6 @@ footer,
   margin-bottom: 9px
 }
 
-.otp-input {
-  width: 100%;
-  height: 48px;
-  border: 1px solid #19363d;
-  background: #071013;
-  border-radius: 7px;
-  color: #e4edef;
-  padding: 0 14px;
-  outline: none;
-  font-size: 14px
-}
-
-.otp-input:focus {
-  border-color: var(--cyan);
-  box-shadow: 0 0 0 3px #25c7dc18
-}
-
-.otp-input::placeholder {
-  color: #617178
-}
-
 .qr-area {
   display: flex;
   flex-direction: column;
@@ -348,8 +326,7 @@ footer,
   margin: 4px 0 0
 }
 
-.primary-button,
-.verify-button {
+.primary-button {
   height: 44px;
   border: 1px solid #17798b;
   border-radius: 6px;
@@ -369,19 +346,16 @@ footer,
   gap: 12px
 }
 
-.primary-button:hover,
-.verify-button:not(:disabled):hover {
+.primary-button:hover {
   background: #187b8e;
   border-color: var(--cyan)
 }
 
-.primary-button:active,
-.verify-button:active {
+.primary-button:active {
   transform: translateY(1px)
 }
 
-.primary-button span,
-.verify-button span {
+.primary-button span {
   font-size: 17px
 }
 
@@ -391,23 +365,15 @@ footer,
   border-top: 1px solid var(--line)
 }
 
-.secret-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px
-}
-
-.secret-toolbar label {
+.secret-label {
   font-size: 10px;
   color: #a9b8bc
 }
 
-.secret-toolbar label span {
+.secret-label span {
   color: #60777d
 }
 
-.text-button,
 .copy-button {
   border: 0;
   background: none;
@@ -444,25 +410,6 @@ footer,
   border-radius: 4px
 }
 
-.uri-details {
-  margin-top: 10px;
-  color: #829399;
-  font-size: 10px
-}
-
-.uri-details summary {
-  cursor: pointer;
-  font-size: 9px
-}
-
-.uri-details code {
-  display: block;
-  margin-top: 7px;
-  color: #a6bbc0;
-  line-height: 1.6;
-  overflow-wrap: anywhere
-}
-
 .verify-panel {
   padding-top: 16px
 }
@@ -482,62 +429,86 @@ footer,
   margin-top: 12px
 }
 
-.verify-controls {
-  display: grid;
-  grid-template-columns: 1fr 120px;
-  gap: 8px
-}
-
 .otp-input {
-  text-align: center;
-  height: 44px;
-  font: 600 17px var(--mono);
-  letter-spacing: .35em
+  width: 216px;
+  max-width: 100%;
+  height: 48px;
+  padding: 4px 0 8px;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  color: var(--text);
+  background-color: transparent;
+  background-image: repeating-linear-gradient(
+    to right,
+    #1d4851 0 24px,
+    transparent 24px 36px
+  );
+  background-repeat: no-repeat;
+  background-size: 216px 2px;
+  background-position: left bottom;
+  font: 600 21px var(--mono);
+  letter-spacing: 12px;
+  text-indent: 7px;
+  caret-color: var(--cyan)
 }
 
-.verify-button {
-  height: 44px
+.otp-input:focus {
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--cyan) 0 24px,
+    transparent 24px 36px
+  )
 }
 
-.verify-button:disabled {
-  opacity: .35;
-  cursor: not-allowed
+.otp-input::placeholder {
+  color: #536a70;
+  opacity: 1;
+  letter-spacing: 4px
 }
 
-.result {
+.otp-input:disabled {
+  opacity: .55
+}
+
+.verify-status {
+  display: block;
+  margin-top: 6px;
+  color: var(--cyan);
+  font: 9px var(--mono);
+  letter-spacing: .08em
+}
+
+.log {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px;
-  margin-top: 10px;
+  margin: 0 0 12px;
   border-radius: 6px;
   font-size: 12px
 }
 
-.result b {
+.log b {
   font: 700 15px var(--mono)
 }
 
-.result.success {
+.log-success {
   background: #0d2925;
   border: 1px solid #1d594c;
   color: #83e0c5
 }
 
-.result.failure {
+.log-failure {
   background: #2b171b;
   border: 1px solid #61313a;
   color: #ff9ca8
 }
 
-.error-banner {
-  padding: 10px 12px;
-  margin: 0 0 12px;
+.log-error {
   border: 1px solid #693740;
   background: #26171b;
   color: #ffadb5;
-  border-radius: 7px;
-  font-size: 12px
 }
 
 footer {
@@ -640,14 +611,6 @@ footer {
 
   .qr-skeleton {
     height: min(48vw, 164px)
-  }
-
-  .verify-controls {
-    grid-template-columns: 1fr 104px
-  }
-
-  .verify-button {
-    font-size: 10px
   }
 
   footer {
