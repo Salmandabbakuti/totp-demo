@@ -26,18 +26,31 @@ const handleEnroll = async () => {
       qrCode,
       label: activeLabel
     });
-  } catch {
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+  } catch (err) {
+    return Response.json(
+      {
+        code: "Internal server error",
+        error: err instanceof Error ? err.message : "Unknown error"
+      },
+      { status: 500 }
+    );
   }
 };
 
 const handleVerify = async (req: Request) => {
   try {
     const { token } = (await req.json()) as { token: string };
+    if (!token) throw new Error("Missing token in request body");
     const result = await verify({ secret: activeSecret, token });
     return Response.json({ ok: result.valid });
-  } catch {
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+  } catch (err) {
+    return Response.json(
+      {
+        code: "Internal server error",
+        error: err instanceof Error ? err.message : "Unknown error"
+      },
+      { status: 500 }
+    );
   }
 };
 
