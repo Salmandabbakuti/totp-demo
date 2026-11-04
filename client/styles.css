@@ -79,7 +79,6 @@ button {
 .header-tag,
 .kicker,
 .section-index,
-.secret-label,
 .verify-form>label,
 .scan-copy,
 footer {
@@ -263,44 +262,20 @@ footer {
 
 .qr-frame img {
   display: block;
-  width: min(100%, 164px);
+  width: min(100%, 200px);
   height: auto;
   aspect-ratio: 1;
   object-fit: contain
 }
 
 .qr-skeleton {
-  width: 164px;
-  height: 164px;
+  width: 200px;
+  height: 200px;
   border: 1px solid #17353c;
   border-radius: 13px;
   background: linear-gradient(110deg, #0b171a 25%, #163038 45%, #0b171a 65%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s linear infinite
-}
-
-.secret-skeleton {
-  display: grid;
-  gap: 7px;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line)
-}
-
-.secret-skeleton span {
-  height: 13px;
-  border-radius: 4px;
-  background: linear-gradient(110deg, #0b171a 25%, #163038 45%, #0b171a 65%);
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.5s linear infinite
-}
-
-.secret-skeleton span:first-child {
-  width: 38%
-}
-
-.secret-skeleton span:last-child {
-  height: 40px
 }
 
 @keyframes skeleton-shimmer {
@@ -360,57 +335,6 @@ footer {
   font-size: 17px
 }
 
-.secret-block {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line)
-}
-
-.secret-label {
-  font-size: 10px;
-  color: #a9b8bc
-}
-
-.secret-label span {
-  color: #60777d
-}
-
-.copy-button {
-  border: 0;
-  background: none;
-  color: var(--cyan);
-  font: 10px var(--mono);
-  letter-spacing: .06em;
-  cursor: pointer
-}
-
-.secret-value {
-  margin-top: 7px;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 7px 10px;
-  background: #070f12;
-  border: 1px solid #17353c;
-  border-radius: 6px
-}
-
-.secret-value code {
-  font: 12px var(--mono);
-  letter-spacing: .09em;
-  overflow-wrap: anywhere;
-  color: #d9e5e7
-}
-
-.copy-button {
-  flex: none;
-  padding: 7px 9px;
-  border: 1px solid #1b4650;
-  border-radius: 4px
-}
-
 .verify-panel {
   padding-top: 16px
 }
@@ -447,8 +371,8 @@ footer {
   background-size: 216px 2px;
   background-position: left bottom;
   font: 600 21px var(--mono);
-  letter-spacing: 12px;
-  text-indent: 7px;
+  letter-spacing: calc(36px - 0.6em);
+  text-indent: calc(12px - 0.3em);
   caret-color: var(--cyan)
 }
 
@@ -460,8 +384,7 @@ footer {
 
 .otp-input::placeholder {
   color: #536a70;
-  opacity: 1;
-  letter-spacing: 4px
+  opacity: 1
 }
 
 .otp-input:disabled {

@@ -5,7 +5,7 @@ import homepage from "../client/index.html";
 
 // Deliberately in-memory: this is a single-user local prototype.
 let activeSecret = generateSecret();
-const activeLabel = "demo@example.com";
+const activeLabel = "johndoe@example.com";
 
 const handleEnroll = async () => {
   try {
@@ -21,10 +21,7 @@ const handleEnroll = async () => {
     });
 
     return Response.json({
-      secret: activeSecret,
-      uri,
-      qrCode,
-      label: activeLabel
+      qrCode
     });
   } catch (err) {
     return Response.json(
@@ -71,14 +68,10 @@ const server = serve({
           async function* () {
             while (true) {
               const code = await generate({ secret: activeSecret });
-
               yield `data: ${JSON.stringify({ code })}\n\n`;
-
               // Wait until the next 30-second TOTP boundary
-              const nextBoundary =
-                (Math.floor(Date.now() / 30_000) + 1) * 30_000;
-
-              await Bun.sleep(nextBoundary - Date.now());
+              const waitDelay = 30_000 - (Date.now() % 30_000);
+              await Bun.sleep(waitDelay);
             }
           },
           {

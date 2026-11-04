@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 
 type Enrollment = {
-  secret: string;
   qrCode: string;
 };
 
 type SseEvent = {
   code: string;
-  timestamp: number;
   expiresAt: number;
   progress: number;
 };
@@ -24,7 +22,6 @@ export default function App() {
   const [sseEvent, setSseEvent] = useState<SseEvent | null>(null);
   const [sseConnected, setSseConnected] = useState(false);
   const [log, setLog] = useState<Log | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const createEnrollment = async () => {
     setLog(null);
@@ -58,11 +55,10 @@ export default function App() {
       const { code } = JSON.parse((event as MessageEvent<string>).data) as {
         code: string;
       };
-      const timestamp = Date.now();
+      const expiresAt = Date.now() + 30_000;
       setSseEvent({
         code,
-        timestamp,
-        expiresAt: timestamp + 30_000,
+        expiresAt,
         progress: 100
       });
     };
@@ -128,21 +124,6 @@ export default function App() {
     }
   }
 
-  async function copySecret() {
-    if (!enrollment) return;
-    try {
-      await navigator.clipboard.writeText(enrollment.secret);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      setLog({
-        type: "error",
-        message:
-          "Clipboard access is unavailable. Please use a supported browser."
-      });
-    }
-  }
-
   return (
     <main className="shell">
       <header className="site-header">
@@ -189,7 +170,7 @@ export default function App() {
           )}
           <p className="scan-copy">
             {loading.createEnrollment
-              ? "PREPARING YOUR SECRET"
+              ? "PREPARING ENROLLMENT"
               : enrollment
                 ? "SCAN WITH YOUR AUTHENTICATOR"
                 : "PLEASE TRY AGAIN"}
@@ -201,39 +182,10 @@ export default function App() {
           )}
         </div>
 
-        {loading.createEnrollment && (
-          <div className="secret-skeleton" aria-hidden="true">
-            <span />
-            <span />
-          </div>
-        )}
-
         {!loading.createEnrollment && !enrollment && (
           <button className="primary-button" onClick={createEnrollment}>
             TRY AGAIN <span>↗</span>
           </button>
-        )}
-
-        {!loading.createEnrollment && enrollment && (
-          <div className="secret-block">
-            <label className="secret-label">
-              MANUAL SECRET <span>· BASE32</span>
-            </label>
-            <div className="secret-value">
-              <code>
-                {enrollment.secret.slice(0, 4)}...
-                {enrollment.secret.slice(-2)}
-              </code>
-              <button
-                className="copy-button"
-                onClick={copySecret}
-                aria-label="Copy secret"
-                title="Copy secret"
-              >
-                {copied ? "✓" : "COPY"}
-              </button>
-            </div>
-          </div>
         )}
       </section>
 
@@ -252,7 +204,7 @@ export default function App() {
                 <i />
                 {sseConnected ? "LIVE" : "WAIT"}
               </span>
-              <code>{sseEvent?.code || "------"}</code>
+              <code>{sseEvent?.code || "------"}</code>|
               <span>02 / VALIDATION</span>
             </div>
             <div
@@ -286,7 +238,7 @@ export default function App() {
             autoComplete="one-time-code"
             maxLength={6}
             pattern="[0-9]{6}"
-            placeholder="1 2 3 4 5 6"
+            placeholder="123456"
             aria-label="Six-digit authenticator code"
             onInput={handleTokenInput}
             disabled={!enrollment || loading.verifyCode}

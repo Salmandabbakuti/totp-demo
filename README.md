@@ -13,7 +13,7 @@ Open http://localhost:3000.
 
 ## API
 
-- `POST /api/enroll`: returns the fixed demo label, TOTP secret, provisioning URI, and QR code data URL.
+- `POST /api/enroll`: returns a QR code data URL for the demo TOTP enrollment. The secret and provisioning URI are not returned.
 - `POST /api/verify`: send `{"token":"123456"}`; responds with `{"ok":true}` for a valid code or `{"ok":false}` for an invalid or expired code.
 - `GET /events/totp`: opens a Server-Sent Events stream. It sends the current server-generated code immediately, then updates on each 30-second TOTP boundary. The browser listens for the default SSE `message` event and displays its `code` value.
 
@@ -45,4 +45,4 @@ curl -X POST http://localhost:3000/api/verify \
 
 ## Defaults and limitations
 
-The demo uses otplib defaults: SHA-1, six digits, a 30-second period, and a Base32 secret. The active secret is held in memory and shared by the single server process. Both the enrollment response and the diagnostic SSE stream expose it or its current OTP for learning purposes. This is not production authentication infrastructure; do not use a real account secret or deploy it as a 2FA service.
+The demo uses otplib defaults: SHA-1, six digits, a 30-second period, and a Base32 secret. The active secret is held in memory and shared by the single server process. The diagnostic SSE stream exposes the current OTP for learning purposes, but the enrollment response does not return the secret. This is not production authentication infrastructure; do not use a real account secret or deploy it as a 2FA service.
