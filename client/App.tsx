@@ -48,39 +48,28 @@ export default function App() {
   useEffect(() => {
     if (!enrollment) return;
 
-    const events = new EventSource("/events/totp");
-    events.onopen = () => setSseConnected(true);
-    events.onerror = () => setSseConnected(false);
-    const handleCode = (event: Event) => {
-      const { code } = JSON.parse((event as MessageEvent<string>).data) as {
-        code: string;
-      };
+    const eventSource = new EventSource("/events/totp");
+    eventSource.onopen = () => setSseConnected(true);
+    eventSource.onerror = () => setSseConnected(false);
+    const handleEvent = (event: MessageEvent<string>) => {
+      const { code } = JSON.parse(event.data) as { code: string };
       const expiresAt = Date.now() + 30_000;
-      setSseEvent({
-        code,
-        expiresAt,
-        progress: 100
-      });
+      setSseEvent({ code, expiresAt, progress: 100 });
     };
-    events.addEventListener("message", handleCode);
+    eventSource.addEventListener("message", handleEvent);
 
     const timer = setInterval(() => {
-      setSseEvent((prev) =>
-        prev
-          ? {
-              ...prev,
-              progress: Math.max(
-                0,
-                ((prev.expiresAt - Date.now()) / 30_000) * 100
-              )
-            }
-          : null
-      );
+      setSseEvent((prev) => {
+        if (!prev) return null;
+        const remaining = prev.expiresAt - Date.now();
+        const progress = Math.max(0, (remaining / 30_000) * 100);
+        return { ...prev, progress };
+      });
     }, 1000);
 
     return () => {
       clearInterval(timer);
-      events.close();
+      eventSource.close();
       setSseConnected(false);
     };
   }, [enrollment]);
@@ -225,10 +214,7 @@ export default function App() {
           that here(vibe-coded apps might though).
         </p>
 
-        <form
-          className="verify-form"
-          onSubmit={(event) => event.preventDefault()}
-        >
+        <form className="verify-form">
           <label htmlFor="otp-code">AUTHENTICATOR CODE</label>
           <input
             id="otp-code"

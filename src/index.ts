@@ -64,6 +64,7 @@ const server = serve({
       GET: (req, server) => {
         // Set timeout to 0 to keep the connection open indefinitely (ideal 10s)
         server.timeout(req, 0);
+        console.log("Client connected to /events/totp");
         return new Response(
           async function* () {
             while (true) {
