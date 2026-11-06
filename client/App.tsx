@@ -8,6 +8,7 @@ type SseEvent = {
   code: string;
   expiresAt: number;
   progress: number;
+  secondsRemaining: number;
 };
 
 type LogType = "success" | "failure" | "error";
@@ -50,20 +51,32 @@ export default function App() {
 
     const eventSource = new EventSource("/events/totp");
     eventSource.onopen = () => setSseConnected(true);
-    eventSource.onerror = () => setSseConnected(false);
+    eventSource.onerror = () => {
+      setSseConnected(false);
+      setSseEvent(null);
+    };
     const handleEvent = (event: MessageEvent<string>) => {
       const { code } = JSON.parse(event.data) as { code: string };
       const expiresAt = Date.now() + 30_000;
-      setSseEvent({ code, expiresAt, progress: 100 });
+      setSseEvent({
+        code,
+        expiresAt,
+        progress: 100,
+        secondsRemaining: 30
+      });
     };
     eventSource.addEventListener("message", handleEvent);
 
     const timer = setInterval(() => {
       setSseEvent((prev) => {
         if (!prev) return null;
-        const remaining = prev.expiresAt - Date.now();
-        const progress = Math.max(0, (remaining / 30_000) * 100);
-        return { ...prev, progress };
+        const remaining = Math.max(0, prev.expiresAt - Date.now());
+        const progress = (remaining / 30_000) * 100;
+        return {
+          ...prev,
+          progress,
+          secondsRemaining: Math.ceil(remaining / 1000)
+        };
       });
     }, 1000);
 
@@ -196,15 +209,20 @@ export default function App() {
               <code>{sseEvent?.code || "------"}</code>|
               <span>02 / VALIDATION</span>
             </div>
-            <div
-              className="code-progress"
-              role="progressbar"
-              aria-label="Time remaining for server code"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={Math.round(sseEvent?.progress ?? 0)}
-            >
-              <span style={{ width: `${sseEvent?.progress ?? 0}%` }} />
+            <div className="code-progress-row">
+              <span className="code-remaining">
+                {sseEvent && `${sseEvent.secondsRemaining}s`}
+              </span>
+              <div
+                className="code-progress"
+                role="progressbar"
+                aria-label="Time remaining for server code"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(sseEvent?.progress ?? 0)}
+              >
+                <span style={{ width: `${sseEvent?.progress ?? 0}%` }} />
+              </div>
             </div>
           </div>
         </div>

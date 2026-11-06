@@ -97,7 +97,7 @@ footer {
 }
 
 .intro {
-  padding: 22px 0 17px
+  padding: 14px 0 10px
 }
 
 .kicker {
@@ -107,9 +107,9 @@ footer {
 }
 
 .intro h1 {
-  font: 600 clamp(32px, 5vw, 44px)/1.05 var(--mono);
+  font: 600 clamp(30px, 4.5vw, 40px)/1.05 var(--mono);
   letter-spacing: -.075em;
-  margin: 10px 0 8px;
+  margin: 7px 0 5px;
   color: #e4edef
 }
 
@@ -120,8 +120,8 @@ footer {
 .intro p {
   max-width: 540px;
   color: #96a3a7;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.4;
   margin: 0
 }
 
@@ -220,8 +220,21 @@ footer {
   box-shadow: 0 0 8px #67d5b788
 }
 
+.code-progress-row {
+  display: flex;
+  align-items: center;
+  width: 100%
+}
+
+.code-remaining {
+  flex: 0 0 20px;
+  color: #829399;
+  font: 9px var(--mono);
+  text-align: left
+}
+
 .code-progress {
-  width: 100%;
+  flex: 1;
   height: 4px;
   overflow: hidden;
   border-radius: 3px;
@@ -262,15 +275,15 @@ footer {
 
 .qr-frame img {
   display: block;
-  width: min(100%, 200px);
+  width: min(100%, 220px);
   height: auto;
   aspect-ratio: 1;
   object-fit: contain
 }
 
 .qr-skeleton {
-  width: 200px;
-  height: 200px;
+  width: 220px;
+  height: 220px;
   border: 1px solid #17353c;
   border-radius: 13px;
   background: linear-gradient(110deg, #0b171a 25%, #163038 45%, #0b171a 65%);
@@ -457,7 +470,7 @@ footer {
   }
 
   .intro {
-    padding-top: 22px
+    padding-top: 14px
   }
 
   .panel {
@@ -465,7 +478,7 @@ footer {
   }
 
   .qr-frame img {
-    width: 164px
+    width: 220px
   }
 }
 
@@ -487,15 +500,15 @@ footer {
   }
 
   .intro {
-    padding: 18px 0 14px
+    padding: 10px 0 8px
   }
 
   .intro h1 {
-    font-size: clamp(30px, 8vw, 38px)
+    font-size: clamp(28px, 7vw, 34px)
   }
 
   .intro p {
-    font-size: 12px
+    font-size: 11px
   }
 
   .panel {
@@ -530,11 +543,11 @@ footer {
 
   .qr-frame img,
   .qr-skeleton {
-    width: min(48vw, 164px)
+    width: min(52vw, 180px)
   }
 
   .qr-skeleton {
-    height: min(48vw, 164px)
+    height: min(52vw, 180px)
   }
 
   footer {
